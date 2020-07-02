@@ -5,10 +5,11 @@ import navigation.roadCal as rc
 from segment.floodfill import *
 import time
 
-SPEED = 60      # 前进速度（0-1000）
+SPEED = 70      # 前进速度（0-1000）
+SPEEDMAX = 120
 
-CAP_SWITCH = 0      # 摄像头选择(0-不使用摄像头, 其他-摄像头编号+1)
-SERIAL_SWITCH = 0   # 串口控制开关
+CAP_SWITCH = 2      # 摄像头选择(0-不使用摄像头, 其他-摄像头编号+1)
+SERIAL_SWITCH = 1   # 串口控制开关
 DISPLAY_SWITCH = 1  # 显示处理结果
 STEP_RUN = 0        # 按步运行（输入w才进入下一步动作）
 path = "./6.jpg"
@@ -39,7 +40,7 @@ def autoCtrl():
 
         img = cv2.resize(src, (640, 480))  # 分辨率重定义
         # copyImg, threImg = rc.cal_floodFill(img, (20, 100, 255), (40, 150, 255))  # FloodFill计算
-        copyImg, threImg = floodFill(img, (91, 23, 28), (28, 26, 40), mask_wide=0)
+        copyImg, threImg = floodFill(img, (18, 58, 155), (44, 76, 111), mask_wide=0)
         if threImg is None:  # 取色失败则进入下一帧
             print(f'[console]FloodFill Error!')
             continue
@@ -47,7 +48,7 @@ def autoCtrl():
         # threImg = cv2.GaussianBlur(threImg, (53, 53), sigmaX=0)
         # line, direct = rc.hough(cv2.Canny(threImg, 100, 127))
 
-        state, staInfo = rc.fitRoad_cross(threImg, 50, scanPercent=0.6, outroadThre=0.6)
+        state, staInfo = rc.fitRoad_cross(threImg, 50, scanPercent=0.5, outroadThre=0.8)
 
         if state == rc.FIT_CROSS_STRAIGHT:
             print(f'[console]Straight!', end='\t')
@@ -74,33 +75,49 @@ def autoCtrl():
 
         # 显示处理时间
         time_elapsed = (time.perf_counter() - time_start)
-        # print(f'[console]Used:\t{int(time_elapsed * 1000)} ms', )
+        print(f'[console]Used:\t{int(time_elapsed * 1000)} ms', )
         # print("[console]Fre:\t%0.2f" % (1 / time_elapsed), " Hz")
 
         # 串口输出
         if SERIAL_SWITCH:
             # 斜率转电机转速
-            print(f'staInfo={staInfo}')
+            # print(f'staInfo={staInfo}')
             if state == rc.FIT_CROSS_STRAIGHT:  # 直
-                # P = 35
-                # motor1 = SPEED + (P*staInfo)
-                # motor2 = SPEED - (P*staInfo)
-                # print(motor1, motor2)
-                # car.setMotor(-motor1, -motor2)
-                if staInfo > 0:
-                    car.setMotor(-(120), -(15))
-                else:
-                    car.setMotor(-(15), -(120))
+                P = 120
+                motor1 = SPEED + (P*staInfo)
+                motor2 = SPEED - (P*staInfo)
+                if motor1 > SPEEDMAX:
+                    motor1 = SPEEDMAX
+                elif motor1 < -SPEEDMAX:
+                    motor1 = -SPEEDMAX
+                if motor2 > SPEEDMAX:
+                    motor2 = SPEEDMAX
+                elif motor2 < -SPEEDMAX:
+                    motor2 = -SPEEDMAX
+                print(motor1, motor2)
+                car.setMotor(-motor1, -motor2)
+                #if staInfo > 0:
+                #    car.setMotor(-(120), -(15))
+                #else:
+                #    car.setMotor(-(15), -(120))
             elif state == rc.FIT_CROSS_TRUN:    # 弯
-                # P = 25
-                # motor1 = SPEED + P*staInfo
-                # motor2 = SPEED - P*staInfo
-                # print(motor1, motor2)
-                # car.setMotor(-motor1, -motor2)
-                if staInfo >0:
-                    car.setMotor(-(100), -(-100))
-                else:
-                    car.setMotor(-(-100), -(100))
+                P = 18
+                motor1 = SPEED + P*staInfo
+                motor2 = SPEED - P*staInfo
+                if motor1 > SPEEDMAX:
+                    motor1 = SPEEDMAX
+                elif motor1 < -SPEEDMAX:
+                    motor1 = -SPEEDMAX
+                if motor2 > SPEEDMAX:
+                    motor2 = SPEEDMAX
+                elif motor2 < -SPEEDMAX:
+                    motor2 = -SPEEDMAX
+                print(motor1, motor2)
+                car.setMotor(-motor1, -motor2)
+                #if staInfo >0:
+                #    car.setMotor(-(100), -(-100))
+                #else:
+                #    car.setMotor(-(-100), -(100))
             elif state == rc.FIT_CROSS_OUT:     # 出
                 motor1 = 0
                 motor2 = 0
@@ -149,8 +166,8 @@ def keyCtrl():
 
 if __name__ == "__main__":
     while True:
-        # key = input('Mode 1: autoCtrl\nMode 2: keyCtrl\n')
-        key = '1'
+        key = input('Mode 1: autoCtrl\nMode 2: keyCtrl\n')
+        # key = '1'
         if key == '1':
             autoCtrl()
         elif key == '2':
