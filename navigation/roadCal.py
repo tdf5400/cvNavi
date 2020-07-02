@@ -94,7 +94,7 @@ def fitRoad_cross(imgThre, threshold, scanPercent=0.7, outroadThre=0.8):
     # W_cir - K值计算中圆曲率权值，K=K_BC-W_cir*K_cir
     W_cir = 0#.2
     # W_height - K值计算中距离权值，将与弯道的距离加入参考值
-    W_height = 3 
+    W_height = 4.5
     # Out_thre - 出田垄判断阈值，顶部有跳变时，两边跳变点
     #            与边缘距离均小于Out_thre判断为出田垄
     #            Out_thre_cache 用于配合floodfill的mask用法
@@ -130,7 +130,7 @@ def fitRoad_cross(imgThre, threshold, scanPercent=0.7, outroadThre=0.8):
             # 跳变点均靠近边缘则判断为出田垄
             if (((width / 2) - distance_l) < Out_thre) and (((width / 2) - distance_r) < Out_thre):
                 road_rate = fitRoad_Out_Conf(edgeImg, OUT_THRESHOLD)
-                return FIT_CROSS_OUT, road_rate
+#                return FIT_CROSS_OUT, road_rate
             # 朝向判断
             if distance_l < distance_r:
                 judge = 0
@@ -186,12 +186,16 @@ def fitRoad_cross(imgThre, threshold, scanPercent=0.7, outroadThre=0.8):
                 K_cir = abs(K_cir)  # 曲率取绝对值
 
                 K = K_BC + W_cir * K_cir
-				
+
+            # 简单计算
+            K = (distance_l - distance_r) / (height - roadHeight)
+            # 参考距离
             if K > 0:
                 K = abs(K) + W_height*50/(height-roadHeight)
             else:
                 K = -(abs(K) +W_height*50/(height-roadHeight))
-            K = (distance_l - distance_r) / (height-roadHeight)
+
+
 
             # 轨迹显示功能（DEBUG）
             if DISPLAY_PROCESS:
@@ -220,9 +224,9 @@ def fitRoad_cross(imgThre, threshold, scanPercent=0.7, outroadThre=0.8):
                 edge[1] = i
 
         # 两边均无线则判断为出路口
-        if edge == [0, width]:
-            road_rate = fitRoad_Out_Conf(edgeImg, OUT_THRESHOLD)
-            return FIT_CROSS_OUT, road_rate
+#        if edge == [0, width]:
+#            road_rate = fitRoad_Out_Conf(edgeImg, OUT_THRESHOLD)
+#            return FIT_CROSS_OUT, road_rate
 
         # 直道修正
         try:
@@ -291,9 +295,9 @@ def backup_fitRoad_cross(imgThre, threshold, scanPercent=0.7, outroadThre=0.8):
             judge = 0  # 0-左，1-右
             distance_l, distance_r = abs(edge[0] - middlePoint), abs(edge[1] - middlePoint)
             # 跳变点均靠近边缘则判断为出田垄
-            if (((width / 2) - distance_l) < Out_thre) and (((width / 2) - distance_r) < Out_thre):
-                road_rate = fitRoad_Out_Conf(edgeImg, OUT_THRESHOLD)
-                return FIT_CROSS_OUT, road_rate
+#            if (((width / 2) - distance_l) < Out_thre) and (((width / 2) - distance_r) < Out_thre):
+#                road_rate = fitRoad_Out_Conf(edgeImg, OUT_THRESHOLD)
+#                return FIT_CROSS_OUT, road_rate
             # 朝向判断
             if distance_l < distance_r:
                 judge = 0
@@ -383,9 +387,9 @@ def backup_fitRoad_cross(imgThre, threshold, scanPercent=0.7, outroadThre=0.8):
                 edge[1] = i
 
         # 两边均无线则判断为出路口
-        if edge == [0, width]:
-            road_rate = fitRoad_Out_Conf(edgeImg, OUT_THRESHOLD)
-            return FIT_CROSS_OUT, road_rate
+#        if edge == [0, width]:
+#            road_rate = fitRoad_Out_Conf(edgeImg, OUT_THRESHOLD)
+#            return FIT_CROSS_OUT, road_rate
 
         # 直道修正
         try:
