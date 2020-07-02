@@ -1,3 +1,4 @@
+# encoding:utf-8
 import cv2
 import numpy as np
 import com.comConsole as comConsole
@@ -8,11 +9,11 @@ import time
 SPEED = 70      # 前进速度（0-1000）
 SPEEDMAX = 120
 
-CAP_SWITCH = 2      # 摄像头选择(0-不使用摄像头, 其他-摄像头编号+1)
-SERIAL_SWITCH = 1   # 串口控制开关
+CAP_SWITCH = 0      # 摄像头选择(0-不使用摄像头, 其他-摄像头编号+1)
+SERIAL_SWITCH = 0   # 串口控制开关
 DISPLAY_SWITCH = 1  # 显示处理结果
 STEP_RUN = 0        # 按步运行（输入w才进入下一步动作）
-path = "./6.jpg"
+path = "./2.jpg"
 
 
 def autoCtrl():
@@ -48,7 +49,7 @@ def autoCtrl():
         # threImg = cv2.GaussianBlur(threImg, (53, 53), sigmaX=0)
         # line, direct = rc.hough(cv2.Canny(threImg, 100, 127))
 
-        state, staInfo = rc.fitRoad_cross(threImg, 50, scanPercent=0.5, outroadThre=0.8)
+        state, staInfo = rc.fitRoad_cross(threImg, 30, scanPercent=0.7, outroadThre=0.8)
 
         if state == rc.FIT_CROSS_STRAIGHT:
             print(f'[console]Straight!', end='\t')
@@ -166,8 +167,8 @@ def keyCtrl():
 
 if __name__ == "__main__":
     while True:
-        key = input('Mode 1: autoCtrl\nMode 2: keyCtrl\n')
-        # key = '1'
+        # key = input('Mode 1: autoCtrl\nMode 2: keyCtrl\n')
+        key = '1'
         if key == '1':
             autoCtrl()
         elif key == '2':
