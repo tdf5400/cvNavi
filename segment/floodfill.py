@@ -38,9 +38,9 @@ def floodFill(image, loDiff, upDiff, mask_wide=0):
 
     # 计算种子点
     if mask_wide == 0:
-        seedThreshold = int(h * w / 7.5)  # 20000   # 最少像素值（只取感兴趣区域）
+        seedThreshold = int(h * w / 6)  # 20000   # 最少像素值（只取感兴趣区域）
     else:
-        seedThreshold = int(h * (2 * mask_wide) / 7.5)  # 20000   # 最少像素值（只取感兴趣区域）
+        seedThreshold = int(h * (2 * mask_wide) / 6)  # 20000   # 最少像素值（只取感兴趣区域）
     timesLimit = 5  # 计算次数限制
     seed = [int(w / 2) - 1, h - 1]  # 以画面中间最下面的点为起始点 （x, y）
     times = 0  # 循环次数，若超过阈值则返回(None,None)

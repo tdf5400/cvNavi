@@ -60,7 +60,7 @@ def parseRx(data):
                 if not len(info) == 2:
                     return infoClass.ERROR, 1  # 数据量错误
                 # 每分钟转速
-                return infoClass.BS, (float(info[0]))
+                return infoClass.BS, (float(info[0]), float(info[1]))
             elif data[0:2] == 'FF':  # 查询故障标识
                 if not len(info) == 1:
                     return infoClass.ERROR, 1  # 数据量错误
