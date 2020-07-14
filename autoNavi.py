@@ -5,15 +5,17 @@ import com.comConsole as comConsole
 import navigation.roadCal as rc
 from segment.floodfill import *
 import time
+import os
 
 SPEED = 70      # 前进速度（0-1000）
 SPEEDMAX = 120
 
-CAP_SWITCH = 0      # 摄像头选择(0-不使用摄像头, 其他-摄像头编号+1)
-SERIAL_SWITCH = 0   # 串口控制开关
+CAP_SWITCH = 1      # 摄像头选择(0-不使用摄像头, 其他-摄像头编号+1)
+SERIAL_SWITCH = 1   # 串口控制开关
 DISPLAY_SWITCH = 1  # 显示处理结果
 STEP_RUN = 0        # 按步运行（输入w才进入下一步动作）
 path = "./o2.jpg"
+PicNum = 64  # startNum when catch picture
 
 
 def autoCtrl():
@@ -47,16 +49,13 @@ def autoCtrl():
 
         img = cv2.resize(src, (640, 480))  # 分辨率重定义
         # copyImg, threImg = rc.cal_floodFill(img, (20, 100, 255), (40, 150, 255))  # FloodFill计算
-        copyImg, threImg = floodFill(img, (66, 111, 132), (70, 119, 114), mask_wide=0)
+        copyImg, threImg = floodFill(img, (66, 111, 132), (70, 130, 114), mask_wide=0)
         if threImg is None:  # 取色失败则进入下一帧
             print(f'[console]FloodFill Error!')
-            continue
-
-        # threImg = cv2.GaussianBlur(threImg, (53, 53), sigmaX=0)
-        # line, direct = rc.hough(cv2.Canny(threImg, 100, 127))
-
-        state, staInfo = rc.fitRoad_cross(threImg, 30, scanPercent=0.7)
-
+            state, staInfo = rc.FIT_CROSS_ERR, 0
+        else:    
+            state, staInfo = rc.fitRoad_cross(threImg, 30, scanPercent=0.6)
+     
         if state == rc.FIT_CROSS_STRAIGHT:
             print(f'[console]Straight!', end='\t')
             print('Theta:', staInfo)
@@ -71,7 +70,7 @@ def autoCtrl():
             print('Info:', staInfo)
 
         # 结果显示
-        if DISPLAY_SWITCH:
+        if DISPLAY_SWITCH and state!=rc.FIT_CROSS_ERR:
             #cv2.imshow('raw', img)
             #cv2.imshow('floodFill', copyImg)
             cv2.imshow('Threshold', threImg)
@@ -82,7 +81,6 @@ def autoCtrl():
                 cv2.line(directImg, (int(img_w / 2 - 1), int(img_h - 1)), line_point, (0, 0, 255), 3)
                 cv2.imshow('Direct', directImg)
             else:
-                
                 cv2.imshow('Direct', img)
 
         # 显示处理时间
@@ -95,7 +93,7 @@ def autoCtrl():
             # 斜率转电机转速
             # print(f'staInfo={staInfo}')
             if state == rc.FIT_CROSS_STRAIGHT:  # 直
-                P = 170
+                P = 120
                 motor1 = SPEED + (P*staInfo)
                 motor2 = SPEED - (P*staInfo)
                 if motor1 > SPEEDMAX:
@@ -113,7 +111,7 @@ def autoCtrl():
                 #else:
                 #    car.setMotor(-(15), -(120))
             elif state == rc.FIT_CROSS_TRUN:    # 弯
-                P = 50
+                P = 53
                 motor1 = SPEED + P*staInfo
                 motor2 = SPEED - P*staInfo
                 if motor1 > SPEEDMAX:
@@ -160,7 +158,7 @@ def autoCtrl():
                         while cv2.waitKey() != 13:
                             pass
         else:
-            keyAction = cv2.waitKey(1)  # 延时1ms
+            keyAction = cv2.waitKey(100)  # 延时1ms
             if keyAction == 27:     # Esc
                 if SERIAL_SWITCH:
                     car.setMotor(0, 0)
@@ -171,7 +169,17 @@ def autoCtrl():
                     car.setMotor(0, 0)
                     while cv2.waitKey() != 13:
                         pass
-
+            elif keyAction == 115:  # savePicture
+                try:
+                    global PicNum
+                    path = '/home/pi/Desktop/cvNavi/camera/'
+                    if not os.path.exists(path):
+                        os.makedirs(path)
+                    cv2.imwrite(path+'{}.jpg'.format(PicNum), src)
+                    print('[console]\tsave pic succeed!')
+                    PicNum += 1
+                except Exception:
+                    print('[console]\tsave pic failed!')
 
 def keyCtrl():
     comConsole.getPortList()
@@ -182,8 +190,8 @@ def keyCtrl():
 
 if __name__ == "__main__":
     while True:
-        # key = input('Mode 1: autoCtrl\nMode 2: keyCtrl\n')
-        key = '1'
+        key = input('Mode 1: autoCtrl\nMode 2: keyCtrl\n')
+        # key = '1'
         if key == '1':
             autoCtrl()
         elif key == '2':

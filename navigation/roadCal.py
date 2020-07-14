@@ -17,7 +17,7 @@ FIT_CROSS_OUT = 2  # 出林道
 FIT_CROSS_ERR = -1  # 错误
 
 
-def fitRoad_Out_Conf(imgThre, errLimit=10, threshold=0.2):
+def fitRoad_Out_Conf(imgThre, ROI=0.8, errLimit=5, threshold=1):
     """
     计算出田垄后，图像中田地占画面高的比例
     :param imgThre: 二值化图像
@@ -28,25 +28,30 @@ def fitRoad_Out_Conf(imgThre, errLimit=10, threshold=0.2):
     """
     # 合法性判断
     assert 0 < threshold <= 1, 'Invalid param!'
-
+    
     copyImg = imgThre.copy()
     height, width = copyImg.shape[0:2]
 
     scanMount = 20  # 遍历次数（分辨率=1/mount）
-    step = int(height / scanMount)  # 步长
+    top = int(height*(1-ROI))
+    step = int((height-top) / scanMount)  # 步长
     times = 0  # 道路次数
     errTimes = 0  # 3次判定失败则退出
 
     # 行遍历
     for i in range(scanMount):
-        if np.percentile(copyImg[i * step], threshold * 100) > 127:
+        # print(np.percentile(copyImg[top + i * step], threshold * 100))
+        # print(sum(copyImg[top + i * step]==255))
+        if sum(copyImg[top + i * step]==255) >= width*threshold:
             times += 1
             errTimes = 0  # 清空错误次数
+            #print('succeed')
         else:
             errTimes += 1
             if errTimes >= errLimit:
                 break
-
+    
+    print('out---',times,1 - (times / scanMount))
     return 1 - (times / scanMount)
 
 
@@ -71,7 +76,7 @@ def fitRoad_cross(imgThre, threshold, scanPercent=0.7):
     # W_cir - K值计算中圆曲率权值，K=K_BC-W_cir*K_cir
     W_cir = 0.2
     # W_height - K值计算中距离权值，将与弯道的距离加入参考值
-    W_height = 150
+    W_height = 100
     # 显示十字法计算轨迹（调试用）
     DISPLAY_PROCESS = 0
 
@@ -186,12 +191,13 @@ def fitRoad_cross(imgThre, threshold, scanPercent=0.7):
     # 遇不到边缘,区分“直道”与“出路口”
     else:
         road_rate = fitRoad_Out_Conf(copyImg)
+        #print(road_rate)
         if 0 < road_rate <= 0.3:  # 如果满足出田垄条件则退出
             return FIT_CROSS_OUT, road_rate
 
         # 直道修正
         try:
-            lines_theta = fitRoad_middle(copyImg, scanPercent=0.7)
+            lines_theta = fitRoad_middle(copyImg, scanPercent=0.6)
             return FIT_CROSS_STRAIGHT, lines_theta
         except IOError:  # 错误报告
             return FIT_CROSS_ERR, -3
@@ -206,7 +212,7 @@ def fitRoad_middle(imgThre, scanPercent=0.7, mount=30):
     :return: 路线斜率
     """
     # 参数设定
-    DISPLAY_PROCESS = 1  # 显示计算路径（调试用）
+    DISPLAY_PROCESS = 0  # 显示计算路径（调试用）
 
     copyImg = imgThre.copy()
     height, width = copyImg.shape[0:2]

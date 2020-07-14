@@ -215,11 +215,11 @@ class keyBoardControl(serialConsole):
             print('[kbControl]\tRight!')
             self.setMotor(motor1=100, motor2=-100)
         elif key is 'z':
-            info = self.getInfo(infoClass.A)
-            print('[kbControl]\tRead: {}'.format(info))
+            self.emergencySTOP(True)
+            print('[kbControl]\temergencySTOP!')
         elif key is 'x':
-            info = self.getInfo(infoClass.BA)
-            print('[kbControl]\tRead: {}'.format(info))
+            self.emergencySTOP(False)
+            print('[kbControl]\temergencySTOP release!')
         elif key is 'c':
             info = self.getInfo(infoClass.BS)
             print('[kbControl]\tRead: {}'.format(info))

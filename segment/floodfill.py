@@ -38,13 +38,13 @@ def floodFill(image, loDiff, upDiff, mask_wide=0):
 
     # 计算种子点
     if mask_wide == 0:
-        seedThreshold = int(h * w / 6)  # 20000   # 最少像素值（只取感兴趣区域）
+        seedThreshold = int(h * w / 5)  # 20000   # 最少像素值（只取感兴趣区域）
     else:
         seedThreshold = int(h * (2 * mask_wide) / 6)  # 20000   # 最少像素值（只取感兴趣区域）
     timesLimit = 5  # 计算次数限制
     seed = [int(w / 2) - 1, h - 1]  # 以画面中间最下面的点为起始点 （x, y）
     times = 0  # 循环次数，若超过阈值则返回(None,None)
-    seedMoveDistance = int(seed[1] * 0.5 / timesLimit)  # 失败后上升的距离（限高0.5）
+    seedMoveDistance = int((h-1) * 0.8 / timesLimit)  # 失败后上升的距离（限高0.5）
 
     while True:
         # floodFill
@@ -82,7 +82,7 @@ def floodFill(image, loDiff, upDiff, mask_wide=0):
             for j in range(w):
                 morphImg.itemset(morph_size + i, morph_size + j, threImg.item(i, j))
         threImg = morphImg
-    kernel = np.ones((65, 65), dtype=np.uint8)
+    kernel = np.ones((65, 75), dtype=np.uint8)
     threImg = cv2.morphologyEx(threImg, cv2.MORPH_CLOSE, kernel)
     # kernel = np.ones((35, 35), dtype=np.uint8)
     # threImg = cv2.morphologyEx(threImg, cv2.MORPH_OPEN, kernel)
